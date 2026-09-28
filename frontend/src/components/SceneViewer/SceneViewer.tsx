@@ -135,11 +135,13 @@ export default function SceneViewer() {
     globe.tileCacheSize = 100;
     globe.loadingDescendantLimit = 2;
 
-    scene.skyBox = undefined as unknown as Cesium.SkyBox;
-    scene.fog.enabled = true;
-    scene.fog.density = 2.0e-4;
-    scene.sun = undefined as unknown as Cesium.Sun;
-    scene.moon = undefined as unknown as Cesium.Moon;
+    if (scene.skyBox) scene.skyBox.show = false;
+    if (scene.sun) scene.sun.show = false;
+    if (scene.moon) scene.moon.show = false;
+    if (scene.fog) {
+      scene.fog.enabled = true;
+      scene.fog.density = 2.0e-4;
+    }
 
     viewer.camera.setView({
       destination: Cesium.Cartesian3.fromDegrees(63.5, 3.5, 3800000),
