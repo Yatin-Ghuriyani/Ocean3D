@@ -31,6 +31,26 @@ export default function SceneViewer() {
   const activeRegion = useOceanStore((s) => s.activeRegion);
 
   const baseLayer = useMemo(() => {
+    if (selectedBasemap === 'google-satellite') {
+      const provider = new Cesium.UrlTemplateImageryProvider({
+        url: `https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}${googleApiKey ? `&key=${googleApiKey}` : ''}`,
+        subdomains: ['0', '1', '2', '3'],
+        maximumLevel: 20,
+        credit: new Cesium.Credit('Google Earth Satellite'),
+      });
+      return new Cesium.ImageryLayer(provider);
+    }
+
+    if (selectedBasemap === 'google-hybrid' || selectedBasemap === 'google-earth') {
+      const provider = new Cesium.UrlTemplateImageryProvider({
+        url: `https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}${googleApiKey ? `&key=${googleApiKey}` : ''}`,
+        subdomains: ['0', '1', '2', '3'],
+        maximumLevel: 20,
+        credit: new Cesium.Credit('Google Earth Hybrid'),
+      });
+      return new Cesium.ImageryLayer(provider);
+    }
+
     if (selectedBasemap === 'dark-matter') {
       const provider = new Cesium.UrlTemplateImageryProvider({
         url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
@@ -42,40 +62,30 @@ export default function SceneViewer() {
     }
 
     if (selectedBasemap === 'google-terrain') {
-      return Cesium.ImageryLayer.fromProviderAsync(
-        Cesium.ArcGisMapServerImageryProvider.fromUrl(
-          'https://services.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer',
-          { enablePickFeatures: false }
-        ).catch(() =>
-          Cesium.ArcGisMapServerImageryProvider.fromUrl(
-            'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer',
-            { enablePickFeatures: false }
-          )
-        )
-      );
+      const provider = new Cesium.UrlTemplateImageryProvider({
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}',
+        maximumLevel: 13,
+        credit: new Cesium.Credit('Esri, USGS'),
+      });
+      return new Cesium.ImageryLayer(provider);
     }
 
     if (selectedBasemap === 'esri-ocean') {
-      return Cesium.ImageryLayer.fromProviderAsync(
-        Cesium.ArcGisMapServerImageryProvider.fromUrl(
-          'https://services.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer',
-          { enablePickFeatures: false }
-        ).catch(() =>
-          Cesium.ArcGisMapServerImageryProvider.fromUrl(
-            'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer',
-            { enablePickFeatures: false }
-          )
-        )
-      );
+      const provider = new Cesium.UrlTemplateImageryProvider({
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}',
+        maximumLevel: 13,
+        credit: new Cesium.Credit('Esri, GEBCO, NOAA'),
+      });
+      return new Cesium.ImageryLayer(provider);
     }
 
-    return Cesium.ImageryLayer.fromProviderAsync(
-      Cesium.ArcGisMapServerImageryProvider.fromUrl(
-        'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer',
-        { enablePickFeatures: false }
-      )
-    );
-  }, [selectedBasemap]);
+    const provider = new Cesium.UrlTemplateImageryProvider({
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      maximumLevel: 19,
+      credit: new Cesium.Credit('Esri, Maxar, Earthstar Geographics'),
+    });
+    return new Cesium.ImageryLayer(provider);
+  }, [selectedBasemap, googleApiKey]);
 
   const terrainProvider = useMemo(() => new Cesium.EllipsoidTerrainProvider(), []);
 
