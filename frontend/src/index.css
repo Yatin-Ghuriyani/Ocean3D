@@ -766,8 +766,12 @@ html, body, #root {
 
 .cesium-infoBox,
 .cesium-infoBox-iframe,
-.cesium-selection-wrapper {
+.cesium-selection-wrapper,
+.cesium-widget-errorPanel {
   display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 .scene-viewer::after {

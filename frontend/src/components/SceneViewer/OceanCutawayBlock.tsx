@@ -88,6 +88,16 @@ export default function OceanCutawayBlock() {
     ];
   }, [west, east, south, north, depthMeters]);
 
+  const wireframeMaterial = useMemo(
+    () =>
+      new Cesium.PolylineGlowMaterialProperty({
+        glowPower: 0.35,
+        taperPower: 0.1,
+        color: Cesium.Color.fromCssColorString('#38bdf8'),
+      }),
+    []
+  );
+
   if (viewMode === 'map2d') return null;
 
   return (
@@ -130,11 +140,7 @@ export default function OceanCutawayBlock() {
           polyline={{
             positions,
             width: 2.2,
-            material: new Cesium.PolylineGlowMaterialProperty({
-              glowPower: 0.35,
-              taperPower: 0.1,
-              color: Cesium.Color.fromCssColorString('#38bdf8'),
-            }),
+            material: wireframeMaterial,
             clampToGround: false,
           }}
         />

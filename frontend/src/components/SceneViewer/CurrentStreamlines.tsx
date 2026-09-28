@@ -67,6 +67,26 @@ export default function CurrentStreamlines() {
   const alpha = isCurrentsActive ? 0.95 : 0.65;
   const width = isCurrentsActive ? 2.8 : 1.8;
 
+  const materialEven = useMemo(
+    () =>
+      new Cesium.PolylineGlowMaterialProperty({
+        glowPower: 0.25,
+        taperPower: 0.4,
+        color: Cesium.Color.fromCssColorString('#e0f2fe').withAlpha(alpha),
+      }),
+    [alpha]
+  );
+
+  const materialOdd = useMemo(
+    () =>
+      new Cesium.PolylineGlowMaterialProperty({
+        glowPower: 0.25,
+        taperPower: 0.4,
+        color: Cesium.Color.fromCssColorString('#38bdf8').withAlpha(alpha),
+      }),
+    [alpha]
+  );
+
   return (
     <>
       {streamlinePaths.map((positions, idx) => (
@@ -75,15 +95,7 @@ export default function CurrentStreamlines() {
           polyline={{
             positions,
             width: width,
-            material: new Cesium.PolylineGlowMaterialProperty({
-              glowPower: 0.25,
-              taperPower: 0.4,
-              color: Cesium.Color.fromCssColorString(
-                idx % 2 === 0
-                  ? `rgba(224, 242, 254, ${alpha})` 
-                  : `rgba(56, 189, 248, ${alpha})`  
-              ),
-            }),
+            material: idx % 2 === 0 ? materialEven : materialOdd,
             clampToGround: false,
           }}
         />

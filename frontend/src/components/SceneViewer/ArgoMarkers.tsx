@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Entity } from 'resium';
 import * as Cesium from 'cesium';
 import { useOceanStore } from '../../stores/oceanStore';
@@ -50,6 +50,16 @@ export default function ArgoMarkers() {
 
   const allFloatsToRender = argoFloats.length > 0 ? argoFloats : [primaryFloat];
 
+  const dashMaterial = useMemo(
+    () =>
+      new Cesium.PolylineDashMaterialProperty({
+        color: Cesium.Color.fromCssColorString('#facc15'),
+        dashLength: 16.0,
+        dashPattern: 255,
+      }),
+    []
+  );
+
   return (
     <>
       {allFloatsToRender.map((float_) => {
@@ -67,11 +77,7 @@ export default function ArgoMarkers() {
                 polyline={{
                   positions: [topPos, surfacePos],
                   width: 2.2,
-                  material: new Cesium.PolylineDashMaterialProperty({
-                    color: Cesium.Color.fromCssColorString('#facc15'),
-                    dashLength: 16.0,
-                    dashPattern: 255,
-                  }),
+                  material: dashMaterial,
                 }}
               />
             )}
