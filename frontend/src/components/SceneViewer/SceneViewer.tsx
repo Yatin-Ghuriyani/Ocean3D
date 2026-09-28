@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
-import { Viewer, type CesiumComponentRef } from 'resium';
+import { Viewer, ImageryLayer, type CesiumComponentRef } from 'resium';
 import * as Cesium from 'cesium';
 import type { Viewer as CesiumViewer } from 'cesium';
 import ArgoMarkers from './ArgoMarkers';
@@ -30,60 +30,49 @@ export default function SceneViewer() {
   const selectedBasemap = useOceanStore((s) => s.selectedBasemap);
   const activeRegion = useOceanStore((s) => s.activeRegion);
 
-  const baseLayer = useMemo(() => {
+  const baseImageryProvider = useMemo(() => {
+    let provider: Cesium.ImageryProvider;
+
     if (selectedBasemap === 'google-satellite') {
-      const provider = new Cesium.UrlTemplateImageryProvider({
+      provider = new Cesium.UrlTemplateImageryProvider({
         url: `https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}${googleApiKey ? `&key=${googleApiKey}` : ''}`,
         subdomains: ['0', '1', '2', '3'],
         maximumLevel: 20,
         credit: new Cesium.Credit('Google Earth Satellite'),
       });
-      return new Cesium.ImageryLayer(provider);
-    }
-
-    if (selectedBasemap === 'google-hybrid' || selectedBasemap === 'google-earth') {
-      const provider = new Cesium.UrlTemplateImageryProvider({
+    } else if (selectedBasemap === 'google-hybrid' || selectedBasemap === 'google-earth') {
+      provider = new Cesium.UrlTemplateImageryProvider({
         url: `https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}${googleApiKey ? `&key=${googleApiKey}` : ''}`,
         subdomains: ['0', '1', '2', '3'],
         maximumLevel: 20,
         credit: new Cesium.Credit('Google Earth Hybrid'),
       });
-      return new Cesium.ImageryLayer(provider);
-    }
-
-    if (selectedBasemap === 'dark-matter') {
-      const provider = new Cesium.UrlTemplateImageryProvider({
+    } else if (selectedBasemap === 'dark-matter') {
+      provider = new Cesium.UrlTemplateImageryProvider({
         url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
         subdomains: ['a', 'b', 'c', 'd'],
         maximumLevel: 19,
         credit: new Cesium.Credit('CARTO & OpenStreetMap'),
       });
-      return new Cesium.ImageryLayer(provider);
-    }
-
-    if (selectedBasemap === 'google-terrain') {
-      const provider = new Cesium.UrlTemplateImageryProvider({
+    } else if (selectedBasemap === 'google-terrain') {
+      provider = new Cesium.UrlTemplateImageryProvider({
         url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}',
         maximumLevel: 13,
         credit: new Cesium.Credit('Esri, USGS'),
       });
-      return new Cesium.ImageryLayer(provider);
-    }
-
-    if (selectedBasemap === 'esri-ocean') {
-      const provider = new Cesium.UrlTemplateImageryProvider({
+    } else if (selectedBasemap === 'esri-ocean') {
+      provider = new Cesium.UrlTemplateImageryProvider({
         url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}',
         maximumLevel: 13,
         credit: new Cesium.Credit('Esri, GEBCO, NOAA'),
       });
-      return new Cesium.ImageryLayer(provider);
+    } else {
+      provider = new Cesium.UrlTemplateImageryProvider({
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        maximumLevel: 19,
+        credit: new Cesium.Credit('Esri, Maxar, Earthstar Geographics'),
+      });
     }
-
-    const provider = new Cesium.UrlTemplateImageryProvider({
-      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      maximumLevel: 19,
-      credit: new Cesium.Credit('Esri, Maxar, Earthstar Geographics'),
-    });
 
     if (provider.errorEvent) {
       provider.errorEvent.addEventListener((err: any) => {
@@ -91,7 +80,7 @@ export default function SceneViewer() {
       });
     }
 
-    return new Cesium.ImageryLayer(provider);
+    return provider;
   }, [selectedBasemap, googleApiKey]);
 
   const terrainProvider = useMemo(() => new Cesium.EllipsoidTerrainProvider(), []);
@@ -131,9 +120,13 @@ export default function SceneViewer() {
     globe.showGroundAtmosphere = true;
     globe.baseColor = Cesium.Color.fromCssColorString('#06101e');
     globe.undergroundColor = Cesium.Color.fromCssColorString('#020812');
-    globe.translucency.enabled = true;
-    globe.translucency.frontFaceAlpha = 0.88;
-    globe.translucency.backFaceAlpha = 0.88;
+
+    const isSliceMode = viewMode === 'slice';
+    globe.translucency.enabled = isSliceMode;
+    if (isSliceMode) {
+      globe.translucency.frontFaceAlpha = 0.75;
+      globe.translucency.backFaceAlpha = 0.75;
+    }
 
     globe.depthTestAgainstTerrain = false;
     globe.preloadAncestors = false;
@@ -203,6 +196,7 @@ export default function SceneViewer() {
     argoFloats,
     timeIndex,
     variable,
+    viewMode,
     setSelectedFloat,
     setSelectedProfile,
     setModelProfile,
@@ -254,7 +248,7 @@ export default function SceneViewer() {
       <Viewer
         ref={viewerRef}
         full
-        baseLayer={baseLayer}
+        baseLayer={false}
         terrainProvider={terrainProvider}
         animation={false}
         timeline={false}
@@ -267,6 +261,7 @@ export default function SceneViewer() {
         fullscreenButton={false}
         homeButton={false}
       >
+        <ImageryLayer imageryProvider={baseImageryProvider} />
 
         {showArgoFloats && <ArgoMarkers />}
         <GliderMarkers />
