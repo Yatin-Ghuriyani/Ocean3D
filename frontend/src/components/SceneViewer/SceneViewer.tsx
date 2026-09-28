@@ -84,6 +84,13 @@ export default function SceneViewer() {
       maximumLevel: 19,
       credit: new Cesium.Credit('Esri, Maxar, Earthstar Geographics'),
     });
+
+    if (provider.errorEvent) {
+      provider.errorEvent.addEventListener((err: any) => {
+        if (err) err.retry = false;
+      });
+    }
+
     return new Cesium.ImageryLayer(provider);
   }, [selectedBasemap, googleApiKey]);
 
@@ -92,6 +99,17 @@ export default function SceneViewer() {
   useEffect(() => {
     const viewer = viewerRef.current?.cesiumElement;
     if (!viewer) return;
+
+    if (Cesium.CesiumWidget && Cesium.CesiumWidget.prototype) {
+      Cesium.CesiumWidget.prototype.showErrorPanel = function (title: string, message: string, error: unknown) {
+        console.warn('Cesium error panel suppressed:', title, message, error);
+      };
+    }
+    if (viewer.cesiumWidget) {
+      viewer.cesiumWidget.showErrorPanel = function (title: string, message: string, error: unknown) {
+        console.warn('Cesium error panel suppressed:', title, message, error);
+      };
+    }
 
     const globe = viewer.scene.globe;
     const scene = viewer.scene;
