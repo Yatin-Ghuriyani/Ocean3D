@@ -173,23 +173,17 @@ export default function OceanDrapeLayer() {
     let isCancelled = false;
 
     const updateDrapeLayer = async () => {
-      let objectUrl: string | null = null;
       try {
         const canvas = buildDrapeCanvas(activeSlice, effectiveMin, effectiveMax, interpolator);
+        const dataUrl = canvas.toDataURL('image/png');
 
-        const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
-        if (!blob || isCancelled || viewer.isDestroyed()) return;
+        if (isCancelled || viewer.isDestroyed()) return;
 
-        objectUrl = URL.createObjectURL(blob);
-
-        const provider = await Cesium.SingleTileImageryProvider.fromUrl(objectUrl, {
+        const provider = await Cesium.SingleTileImageryProvider.fromUrl(dataUrl, {
           rectangle: drapeRectangle,
         });
 
-        if (isCancelled || viewer.isDestroyed()) {
-          if (objectUrl) URL.revokeObjectURL(objectUrl);
-          return;
-        }
+        if (isCancelled || viewer.isDestroyed()) return;
 
         if (currentLayerRef.current && !viewer.isDestroyed()) {
           viewer.imageryLayers.remove(currentLayerRef.current, true);
@@ -206,10 +200,6 @@ export default function OceanDrapeLayer() {
         viewer.scene.requestRender();
       } catch (err) {
         console.error('Failed to create OceanDrapeLayer SingleTileImageryProvider:', err);
-      } finally {
-        if (objectUrl) {
-          URL.revokeObjectURL(objectUrl);
-        }
       }
     };
 
